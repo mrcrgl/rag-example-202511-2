@@ -15,15 +15,28 @@ def cosine_similarity(vec1, vec2):
 
 def main():
 
-    is_question = create_embedding("question")
-    is_information = create_embedding("information or statement")
+    input_text="""
+    Die Mutter war auch entzückt und sagte:
 
-    vec1 = create_embedding("Betty wurde alt")
-    similarity_question = cosine_similarity(vec1, is_question)
-    similarity_information = cosine_similarity(vec1, is_information)
+    »Es ist gut, mein Kind, daß du nicht alle Birkenblätter fortwarfst! Hier
+    haben wir Gold genug, um uns ein kleines Gut zu kaufen!«
 
-    print(f"Similarity to question: {similarity_question:.4f}")
-    print(f"Similarity to information: {similarity_information:.4f}")
+    Betty und ihre verwitwete Mutter kauften nun wirklich ein kleines Gut.
+    Sie kauften auch viele Kühe, Pferde, Ochsen, Schafe, Ziegen, Hühner,
+    Gänse und Enten, und wurden sehr reich. Betty mußte das Vieh nicht mehr
+    hüten, aber sie ging oft in den Wald, denn sie hoffte immer die schöne
+    Waldfrau noch einmal dort zu sehen. Diese Hoffnung aber war immer
+    vergebens, und Betty wurde sehr alt, ohne ihr schönes Mädchen je
+    wiedergesehen zu haben.
+    """
+
+    print(len(input_text.split(" ")) / 0.7)
+
+    vec1 = create_embedding(input_text)
+    vec2 = create_embedding("Betty wurde sehr alt")
+    similarity = cosine_similarity(vec1, vec2)
+
+    print(similarity)
 
 
 if __name__ == "__main__":
