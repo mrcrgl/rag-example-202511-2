@@ -94,3 +94,12 @@ def get_chunks(file_path: str = "data/35794-0.txt", window_size: int = 3, stride
 def load_data(file_path: str) -> str:
     with open(file_path, 'r') as file:
         return file.read()
+
+
+def main():
+    chunks = get_chunks()
+    for chunk in chunks:
+        print(f"{chunk.story}: {len(chunk.paragraphs)}")
+
+if __name__ == "__main__":
+    main()
