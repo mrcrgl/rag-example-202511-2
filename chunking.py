@@ -99,7 +99,7 @@ def load_data(file_path: str) -> str:
 def main():
     chunks = get_chunks()
     for chunk in chunks:
-        print(f"{chunk.story}: {len(chunk.paragraphs)}")
+        print(f"{chunk.story}: \n{"\n-\n".join(chunk.paragraphs)}\n\n--------------")
 
 if __name__ == "__main__":
     main()
