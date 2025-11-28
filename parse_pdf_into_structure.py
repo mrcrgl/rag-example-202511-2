@@ -293,6 +293,7 @@ def build_document_structure(pdf_path: str, out_dir: str):
                         structure["segments"].append(current_segment)
 
                     current_segment = {
+                        "segment_id": str(uuid.uuid4()),
                         "headline": ln,
                         "meta": {"page": page_num, "headline": ln},
                         "pages": [page_num],
