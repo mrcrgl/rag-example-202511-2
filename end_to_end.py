@@ -81,8 +81,6 @@ def main():
     context_blocks = build_context_blocks(user_prompt_vec)
     system_prompt = build_system_prompt("\n".join(context_blocks))
 
-    print(system_prompt)
-
     response = ask_chat(system_prompt, user_prompt)
 
     print(response)
