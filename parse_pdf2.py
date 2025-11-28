@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import pdfplumber
 import fitz  # PyMuPDF
 from pathlib import Path
@@ -91,10 +92,116 @@ def extract_images(pdf_path: str, out_dir: str):
         json.dump(img_manifest, mf, ensure_ascii=False, indent=2)
 
 
+def is_headline(line: str) -> bool:
+    """Heuristic headline detection from plain text lines."""
+    if not line:
+        return False
+    s = line.strip()
+    if len(s) < 3:
+        return False
+    # Numbered headings like "1", "1.1", "2.3.4 Some Title", "3) Title"
+    if re.match(r'^\d+(\.\d+)*(\)|\.)?\s+\S', s):
+        return True
+    # ALL CAPS or mostly caps short-ish lines
+    letters = [ch for ch in s if ch.isalpha()]
+    if letters:
+        upper_ratio = sum(1 for ch in letters if ch.isupper()) / len(letters)
+        if upper_ratio >= 0.7 and len(s) <= 120:
+            return True
+    # Title case short lines
+    # if len(s) <= 80 and s.istitle():
+    #     return True
+    # Ends with colon
+    if len(s) <= 120 and s.endswith(":"):
+        return True
+    return False
+
+
+def build_document_structure(pdf_path: str, out_dir: str):
+    """
+    Build a document structure with segments grouped by detected headlines.
+    Each segment contains:
+      - meta: { page, headline }
+      - headline: string
+      - pages: list[int]
+      - text: concatenated text under the headline
+      - tables: list of { page, index, rows }
+    Also writes the structure to out_dir/document_structure.json and returns it.
+    """
+    ensure_dir(out_dir)
+    structure = {"pdf": pdf_path, "segments": []}
+
+    with pdfplumber.open(pdf_path) as pdf:
+        current_segment = None
+
+        for page_num, page in enumerate(pdf.pages, start=1):
+            # -------- Text: parse lines and detect headlines ----------
+            text = page.extract_text() or ""
+            lines = [ln.strip() for ln in text.splitlines()]
+
+            for ln in lines:
+                if is_headline(ln):
+                    # Commit previous segment if it has any content
+                    if current_segment and (current_segment.get("text") or current_segment.get("tables")):
+                        structure["segments"].append(current_segment)
+
+                    current_segment = {
+                        "headline": ln,
+                        "meta": {"page": page_num, "headline": ln},
+                        "pages": [page_num],
+                        "text": "",
+                        "tables": []
+                    }
+                else:
+                    if not current_segment:
+                        # Fallback segment before the first detected headline
+                        current_segment = {
+                            "headline": "UNTITLED",
+                            "meta": {"page": page_num, "headline": "UNTITLED"},
+                            "pages": [page_num],
+                            "text": "",
+                            "tables": []
+                        }
+                    current_segment["text"] = (current_segment["text"] + ("\n" if current_segment["text"] else "") + ln)
+                    if page_num not in current_segment["pages"]:
+                        current_segment["pages"].append(page_num)
+
+            # -------- Tables: attach to the current segment ----------
+            tables = page.extract_tables() or []
+            for t_idx, table in enumerate(tables, start=1):
+                rows = [[(c or "").strip() for c in (row or [])] for row in (table or [])]
+                if not current_segment:
+                    current_segment = {
+                        "headline": "UNTITLED",
+                        "meta": {"page": page_num, "headline": "UNTITLED"},
+                        "pages": [page_num],
+                        "text": "",
+                        "tables": []
+                    }
+                current_segment["tables"].append({
+                    "page": page_num,
+                    "index": t_idx,
+                    "rows": rows
+                })
+                if page_num not in current_segment["pages"]:
+                    current_segment["pages"].append(page_num)
+
+        # Commit the last segment
+        if current_segment and (current_segment.get("text") or current_segment.get("tables")):
+            structure["segments"].append(current_segment)
+
+    # Persist JSON
+    with open(Path(out_dir) / "document_structure.json", "w", encoding="utf-8") as f:
+        json.dump(structure, f, ensure_ascii=False, indent=2)
+
+    return structure
+
+
 def main():
     ensure_dir(OUT_DIR)
     extract_text_and_tables(PDF_PATH, OUT_DIR)
     extract_images(PDF_PATH, OUT_DIR)
+    build_document_structure(PDF_PATH, OUT_DIR)
     print(f"Fertig. Ausgabe in: {OUT_DIR}")
 
 
