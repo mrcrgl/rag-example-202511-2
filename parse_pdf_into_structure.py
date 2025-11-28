@@ -268,6 +268,10 @@ def build_document_structure(pdf_path: str, out_dir: str):
     with pdfplumber.open(pdf_path) as pdf:
         current_segment = None
 
+        meta_release_date = pdf.metadata.get("CreationDate", "N/A")
+        meta_type = "application/pdf"
+        meta_title = pdf.metadata.get("Title", "N/A")
+
         for page_num, page in enumerate(pdf.pages, start=1):
             # -------- Text: parse lines and detect headlines (exclude table regions) ----------
             words = _filter_words_outside_bboxes(page)
@@ -295,7 +299,7 @@ def build_document_structure(pdf_path: str, out_dir: str):
                     current_segment = {
                         "segment_id": str(uuid.uuid4()),
                         "headline": ln,
-                        "meta": {"page": page_num, "headline": ln},
+                        "meta": {"page": page_num, "headline": ln, "release_date": meta_release_date, "title": meta_title, "type": meta_type},
                         "pages": [page_num],
                         "text": "",
                         "tables": []
@@ -306,7 +310,7 @@ def build_document_structure(pdf_path: str, out_dir: str):
                         current_segment = {
                             "segment_id": str(uuid.uuid4()),
                             "headline": "UNTITLED",
-                            "meta": {"page": page_num, "headline": "UNTITLED"},
+                            "meta": {"page": page_num, "headline": "UNTITLED", "release_date": meta_release_date, "title": meta_title, "type": meta_type},
                             "pages": [page_num],
                             "text": "",
                             "tables": []
@@ -323,7 +327,7 @@ def build_document_structure(pdf_path: str, out_dir: str):
                     current_segment = {
                         "segment_id": str(uuid.uuid4()),
                         "headline": "UNTITLED",
-                        "meta": {"page": page_num, "headline": "UNTITLED"},
+                        "meta": {"page": page_num, "headline": "UNTITLED", "release_date": meta_release_date, "title": meta_title, "type": meta_type},
                         "pages": [page_num],
                         "text": "",
                         "tables": []
