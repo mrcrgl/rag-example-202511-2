@@ -4,6 +4,7 @@ import re
 import pdfplumber
 import fitz  # PyMuPDF
 from pathlib import Path
+import uuid
 
 PDF_PATH = "data/BMI25028_pks-2024.pdf"  # dein PDF
 OUT_DIR = "parsed_pks"
@@ -156,6 +157,7 @@ def build_document_structure(pdf_path: str, out_dir: str):
                     if not current_segment:
                         # Fallback segment before the first detected headline
                         current_segment = {
+                            "segment_id": str(uuid.uuid4()),
                             "headline": "UNTITLED",
                             "meta": {"page": page_num, "headline": "UNTITLED"},
                             "pages": [page_num],
@@ -172,6 +174,7 @@ def build_document_structure(pdf_path: str, out_dir: str):
                 rows = [[(c or "").strip() for c in (row or [])] for row in (table or [])]
                 if not current_segment:
                     current_segment = {
+                        "segment_id": str(uuid.uuid4()),
                         "headline": "UNTITLED",
                         "meta": {"page": page_num, "headline": "UNTITLED"},
                         "pages": [page_num],

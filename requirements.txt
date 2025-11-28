@@ -4,3 +4,5 @@ openai
 pymupdf
 pymupdf-layout
 pymupdf4llm
+uuid
+pdfplumber
