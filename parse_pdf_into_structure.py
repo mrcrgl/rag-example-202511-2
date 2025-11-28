@@ -125,7 +125,7 @@ def is_headline(line: str, meta: dict | None = None) -> bool:
 
     # Numbered headings like "1", "1.1", "2.3.4 Some Title", "3) Title"
     # Require that the numbering is followed by a letter, not a number
-    if re.match(r'^\d+(?:\.\d+)*(?:\)|\.)?\s+[A-Za-zÄÖÜäöü]', s):
+    if re.match(r'^\s*\d{1,2}(?:\.\d{1,2})*\s+[^.]+$', s):
         return True
 
     # ALL CAPS or mostly caps short-ish lines
